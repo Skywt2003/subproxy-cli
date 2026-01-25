@@ -1,6 +1,6 @@
 {
   "name": "subproxy-cli",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "CLI proxy manager built on sing-box",
   "type": "module",
   "main": "dist/index.js",

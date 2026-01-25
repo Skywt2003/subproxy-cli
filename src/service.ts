@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 type Platform = "linux" | "darwin";
 
@@ -12,11 +13,13 @@ export async function installService(configPath?: string): Promise<void> {
   const platform = getPlatform();
   const args = getExecArgs(configPath);
   const workingDir = getWorkingDir(configPath);
+  const logDir = getLogDir();
+  await fs.mkdir(logDir, { recursive: true });
 
   if (platform === "linux") {
     const unitPath = getSystemdUserPath();
     await fs.mkdir(path.dirname(unitPath), { recursive: true });
-    const content = buildSystemdUnit(args, workingDir);
+    const content = buildSystemdUnit(args, workingDir, logDir);
     await fs.writeFile(unitPath, content, "utf8");
     await runCommand("systemctl", ["--user", "daemon-reload"]);
     console.log(`Installed systemd user service at ${unitPath}`);
@@ -25,7 +28,7 @@ export async function installService(configPath?: string): Promise<void> {
 
   const plistPath = getLaunchdPath();
   await fs.mkdir(path.dirname(plistPath), { recursive: true });
-  const content = buildLaunchdPlist(args, workingDir);
+  const content = buildLaunchdPlist(args, workingDir, logDir);
   await fs.writeFile(plistPath, content, "utf8");
   console.log(`Installed launchd agent at ${plistPath}`);
 }
@@ -41,6 +44,7 @@ export async function uninstallService(): Promise<void> {
   }
 
   const plistPath = getLaunchdPath();
+  await tryCommand("launchctl", ["bootout", getLaunchdDomain(), plistPath]);
   await safeRemove(plistPath);
   console.log("Removed launchd agent.");
 }
@@ -52,7 +56,12 @@ export async function startService(): Promise<void> {
     return;
   }
   const plistPath = getLaunchdPath();
-  await runCommand("launchctl", ["bootstrap", getLaunchdDomain(), plistPath]);
+  await tryCommand("launchctl", ["bootout", getLaunchdDomain(), plistPath]);
+  try {
+    await runCommand("launchctl", ["bootstrap", getLaunchdDomain(), plistPath]);
+  } catch {
+    await runCommand("launchctl", ["kickstart", "-k", getLaunchdDomainLabel()]);
+  }
 }
 
 export async function stopService(): Promise<void> {
@@ -61,7 +70,7 @@ export async function stopService(): Promise<void> {
     await runCommand("systemctl", ["--user", "stop", SERVICE_NAME]);
     return;
   }
-  await runCommand("launchctl", ["bootout", getLaunchdDomainLabel()]);
+  await runCommand("launchctl", ["bootout", getLaunchdDomain(), getLaunchdPath()]);
 }
 
 export async function enableService(): Promise<void> {
@@ -93,7 +102,7 @@ export async function statusService(): Promise<void> {
 
 function getExecArgs(configPath?: string): string[] {
   const nodePath = process.execPath;
-  const scriptPath = path.resolve(process.argv[1]);
+  const scriptPath = getEntryScriptPath();
   const args = [nodePath, scriptPath, "run"];
   if (configPath) {
     args.push("--config", path.resolve(configPath));
@@ -108,8 +117,13 @@ function getWorkingDir(configPath?: string): string {
   return process.cwd();
 }
 
-function buildSystemdUnit(args: string[], workingDir: string): string {
+function buildSystemdUnit(
+  args: string[],
+  workingDir: string,
+  logDir: string,
+): string {
   const execStart = args.map(escapeSystemdArg).join(" ");
+  const envPath = getEnvPath();
   return `[Unit]\n` +
     `Description=${SERVICE_NAME}\n` +
     `After=network-online.target\n\n` +
@@ -119,15 +133,25 @@ function buildSystemdUnit(args: string[], workingDir: string): string {
     `ExecStart=${execStart}\n` +
     `Restart=on-failure\n` +
     `RestartSec=5\n` +
-    `Environment=NODE_ENV=production\n\n` +
+    `Environment=NODE_ENV=production\n` +
+    `Environment=PATH=${escapeSystemdArg(envPath)}\n` +
+    `StandardOutput=append:${path.join(logDir, "service.log")}\n` +
+    `StandardError=append:${path.join(logDir, "service.error.log")}\n\n` +
     `[Install]\n` +
     `WantedBy=default.target\n`;
 }
 
-function buildLaunchdPlist(args: string[], workingDir: string): string {
+function buildLaunchdPlist(
+  args: string[],
+  workingDir: string,
+  logDir: string,
+): string {
   const programArgs = args
     .map((arg) => `    <string>${escapeXml(arg)}</string>`)
     .join("\n");
+  const envPath = escapeXml(getEnvPath());
+  const outLog = escapeXml(path.join(logDir, "service.log"));
+  const errLog = escapeXml(path.join(logDir, "service.error.log"));
   return `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n` +
     `<plist version="1.0">\n` +
@@ -142,6 +166,17 @@ function buildLaunchdPlist(args: string[], workingDir: string): string {
     `  <true/>\n` +
     `  <key>WorkingDirectory</key>\n` +
     `  <string>${escapeXml(workingDir)}</string>\n` +
+    `  <key>EnvironmentVariables</key>\n` +
+    `  <dict>\n` +
+    `    <key>PATH</key>\n` +
+    `    <string>${envPath}</string>\n` +
+    `    <key>NODE_ENV</key>\n` +
+    `    <string>production</string>\n` +
+    `  </dict>\n` +
+    `  <key>StandardOutPath</key>\n` +
+    `  <string>${outLog}</string>\n` +
+    `  <key>StandardErrorPath</key>\n` +
+    `  <string>${errLog}</string>\n` +
     `</dict>\n` +
     `</plist>\n`;
 }
@@ -161,6 +196,11 @@ function escapeXml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function getEntryScriptPath(): string {
+  const url = new URL("./index.js", import.meta.url);
+  return fileURLToPath(url);
+}
+
 function getPlatform(): Platform {
   if (process.platform === "linux") {
     return "linux";
@@ -177,6 +217,15 @@ function getSystemdUserPath(): string {
 
 function getLaunchdPath(): string {
   return path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCHD_LABEL}.plist`);
+}
+
+function getLogDir(): string {
+  return path.join(os.homedir(), ".subproxy-cli");
+}
+
+function getEnvPath(): string {
+  const fallback = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+  return process.env.PATH ? `${process.env.PATH}:${fallback}` : fallback;
 }
 
 function getLaunchdDomain(): string {
@@ -207,4 +256,12 @@ async function runCommand(command: string, args: string[]): Promise<void> {
       }
     });
   });
+}
+
+async function tryCommand(command: string, args: string[]): Promise<void> {
+  try {
+    await runCommand(command, args);
+  } catch {
+    return;
+  }
 }
