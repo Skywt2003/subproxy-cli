@@ -61,6 +61,29 @@ test:
 - `run` Run in background with periodic updates
 - `list` List available nodes
 
+## User Service
+User-level service management for Linux (systemd) and macOS (launchd).
+
+Install service definition:
+```bash
+subproxy-cli service install
+```
+
+Start service:
+```bash
+subproxy-cli service start
+```
+
+Enable auto-start on login:
+```bash
+subproxy-cli service enable
+```
+
+Check status:
+```bash
+subproxy-cli service status
+```
+
 ## Output
 - Generated config: `.subproxy-cli/sing-box.json`
 - Runtime cache: `.subproxy-cli/`
