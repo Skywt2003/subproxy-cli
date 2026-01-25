@@ -59,13 +59,13 @@ interval:
 - `interval.update` / `interval.test`: background scheduling.
 
 ## CLI Commands (Draft)
-- `proxy-cli run`
+- `subproxy-cli run`
   - Background mode. Periodically updates subscriptions, tests nodes, regenerates config, manages sing-box.
-- `proxy-cli gen`
+- `subproxy-cli gen`
   - One-shot config generation (no sing-box process).
-- `proxy-cli test`
+- `subproxy-cli test`
   - Manual test of current nodes.
-- `proxy-cli list`
+- `subproxy-cli list`
   - List nodes and selected target.
 
 ## Runtime Flow

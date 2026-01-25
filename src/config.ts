@@ -15,7 +15,7 @@ const DEFAULT_GEOSITE_CN_URL =
 const DEFAULT_RULESET_UPDATE = "1d";
 
 export const DEFAULT_CONFIG_PATH = "config.yaml";
-export const DEFAULT_DATA_DIR = ".proxy-cli";
+export const DEFAULT_DATA_DIR = ".subproxy-cli";
 
 export async function loadConfig(configPath?: string): Promise<NormalizedConfig> {
   const resolvedPath = path.resolve(configPath ?? DEFAULT_CONFIG_PATH);

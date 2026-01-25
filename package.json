@@ -1,16 +1,27 @@
 {
-  "name": "proxy-cli",
+  "name": "subproxy-cli",
   "version": "0.1.0",
   "description": "CLI proxy manager built on sing-box",
   "type": "module",
+  "main": "dist/index.js",
   "bin": {
-    "proxy-cli": "dist/index.js"
+    "subproxy-cli": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "pnpm build"
   },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
   "dependencies": {
     "commander": "^12.1.0",
     "yaml": "^2.5.1"

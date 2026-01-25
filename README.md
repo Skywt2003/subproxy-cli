@@ -1,4 +1,4 @@
-# proxy-cli
+# subproxy-cli
 
 CLI proxy manager built on sing-box. It reads a single `config.yaml`, generates a sing-box config, and runs the core for you.
 
@@ -9,6 +9,11 @@ CLI proxy manager built on sing-box. It reads a single `config.yaml`, generates 
 
 ## Install
 ```bash
+npm i -g subproxy-cli
+```
+
+## Install (dev)
+```bash
 pnpm install
 ```
 
@@ -16,11 +21,11 @@ pnpm install
 1. Create `config.yaml` in the project root.
 2. Generate config once:
 ```bash
-pnpm exec tsx src/index.ts gen
+subproxy-cli gen
 ```
 3. Run in background mode:
 ```bash
-pnpm exec tsx src/index.ts run
+subproxy-cli run
 ```
 
 ## Example config.yaml
@@ -57,5 +62,5 @@ test:
 - `list` List available nodes
 
 ## Output
-- Generated config: `.proxy-cli/sing-box.json`
-- Runtime cache: `.proxy-cli/`
+- Generated config: `.subproxy-cli/sing-box.json`
+- Runtime cache: `.subproxy-cli/`

@@ -5,7 +5,7 @@ export function runCli(argv: string[]): void {
   const program = new Command();
 
   program
-    .name("proxy-cli")
+    .name("subproxy-cli")
     .description("CLI proxy manager built on sing-box")
     .option("-c, --config <path>", "path to config.yaml");
 
