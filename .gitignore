@@ -1,0 +1,13 @@
+node_modules
+dist
+.proxy-cli
+*.log
+.DS_Store
+pnpm-debug.log
+npm-debug.log
+*.pid
+*.pid.lock
+tmp
+coverage
+.env
+.env.*

@@ -1,0 +1,24 @@
+subscriptions:
+  - "https://hutaod.com/link/VoenJSqIlWRjFUp6?sub=3"
+inbound:
+  httpPort: 20800
+  socksPort: 20801
+excludeKeywords:
+  - "香港"
+  - "HK"
+  - "Hong Kong"
+nodes:
+  - type: vmess
+    server: "v.skywt.net"
+    server_port: 443
+    uuid: "22f58f1c-d0e9-46ee-b833-5f67601c9880"
+    alter_id: 0
+    security: "auto"
+    tls:
+      enabled: true
+      server_name: "v.skywt.net"
+    transport:
+      type: "ws"
+      path: "/ray"
+test:
+  url: "https://www.google.com/generate_204"
