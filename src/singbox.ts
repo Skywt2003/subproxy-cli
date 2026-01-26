@@ -72,6 +72,11 @@ export function buildSingBoxConfig(
       ],
       rules: [
         {
+          ip_is_private: true,
+          domain_suffix: [".local"],
+          outbound: "direct",
+        },
+        {
           rule_set: ["cn-ip", "cn-domain"],
           outbound: "direct",
         },
@@ -86,6 +91,17 @@ export function startSingBox(configPath: string, binPath: string): void {
   singBoxProcess = spawn(binPath, ["run", "-c", configPath], {
     stdio: "inherit",
   });
+  singBoxProcess.on("error", (error) => {
+    singBoxProcess = null;
+    if (isMissingCommand(error)) {
+      console.error(
+        `[ERROR] sing-box binary not found: ${binPath}. Install sing-box or set singBox.bin in config.yaml.`,
+      );
+    } else {
+      console.error(`[ERROR] Failed to start sing-box: ${error.message}`);
+    }
+    process.exitCode = 1;
+  });
 }
 
 export function stopSingBox(): void {
@@ -94,4 +110,9 @@ export function stopSingBox(): void {
   }
   singBoxProcess.kill("SIGTERM");
   singBoxProcess = null;
+}
+
+function isMissingCommand(error: Error): boolean {
+  const nodeError = error as NodeJS.ErrnoException;
+  return nodeError.code === "ENOENT";
 }

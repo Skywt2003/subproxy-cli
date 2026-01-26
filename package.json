@@ -16,6 +16,8 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "pnpm build"
   },
   "engines": {
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@types/node": "^20.14.11",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.9"
   }
 }

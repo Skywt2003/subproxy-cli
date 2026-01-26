@@ -117,7 +117,7 @@ function getWorkingDir(configPath?: string): string {
   return process.cwd();
 }
 
-function buildSystemdUnit(
+export function buildSystemdUnit(
   args: string[],
   workingDir: string,
   logDir: string,
@@ -141,7 +141,7 @@ function buildSystemdUnit(
     `WantedBy=default.target\n`;
 }
 
-function buildLaunchdPlist(
+export function buildLaunchdPlist(
   args: string[],
   workingDir: string,
   logDir: string,
@@ -181,14 +181,14 @@ function buildLaunchdPlist(
     `</plist>\n`;
 }
 
-function escapeSystemdArg(value: string): string {
+export function escapeSystemdArg(value: string): string {
   if (/[^A-Za-z0-9_./:-]/.test(value)) {
     return `"${value.replace(/"/g, "\\\"")}"`;
   }
   return value;
 }
 
-function escapeXml(value: string): string {
+export function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -196,7 +196,7 @@ function escapeXml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function getEntryScriptPath(): string {
+export function getEntryScriptPath(): string {
   const url = new URL("./index.js", import.meta.url);
   return fileURLToPath(url);
 }
@@ -211,28 +211,28 @@ function getPlatform(): Platform {
   throw new Error(`Unsupported platform: ${process.platform}`);
 }
 
-function getSystemdUserPath(): string {
+export function getSystemdUserPath(): string {
   return path.join(os.homedir(), ".config", "systemd", "user", `${SERVICE_NAME}.service`);
 }
 
-function getLaunchdPath(): string {
+export function getLaunchdPath(): string {
   return path.join(os.homedir(), "Library", "LaunchAgents", `${LAUNCHD_LABEL}.plist`);
 }
 
-function getLogDir(): string {
+export function getLogDir(): string {
   return path.join(os.homedir(), ".subproxy-cli");
 }
 
-function getEnvPath(): string {
+export function getEnvPath(): string {
   const fallback = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
   return process.env.PATH ? `${process.env.PATH}:${fallback}` : fallback;
 }
 
-function getLaunchdDomain(): string {
+export function getLaunchdDomain(): string {
   return `gui/${process.getuid?.() ?? 0}`;
 }
 
-function getLaunchdDomainLabel(): string {
+export function getLaunchdDomainLabel(): string {
   return `${getLaunchdDomain()}/${LAUNCHD_LABEL}`;
 }
 
