@@ -60,8 +60,9 @@ export async function startService(): Promise<void> {
   try {
     await runCommand("launchctl", ["bootstrap", getLaunchdDomain(), plistPath]);
   } catch {
-    await runCommand("launchctl", ["kickstart", "-k", getLaunchdDomainLabel()]);
+    // Continue to kickstart for agents already loaded or after bootstrap failure.
   }
+  await runCommand("launchctl", ["kickstart", "-k", getLaunchdDomainLabel()]);
 }
 
 export async function stopService(): Promise<void> {
